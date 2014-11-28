@@ -33,6 +33,9 @@ class VUnit:
     """
     The public interface of VUnit
     """
+
+    _builtin_vhdl_path = abspath(join(dirname(__file__), "..", "vhdl"))
+
     @classmethod
     def from_argv(cls, argv=None):
         """
@@ -376,7 +379,17 @@ class VUnit:
 
         library = self.add_library(library_name)
         for file_name in files:
-            library.add_source_files(abspath(join(dirname(__file__), "..", "vhdl", file_name)))
+            library.add_source_files(join(self._builtin_vhdl_path, file_name))
+
+    def add_array_util(self, library_name="vunit_lib"):
+        """
+        Add array utility package
+        """
+        if self._vhdl_standard != '2008':
+            raise RuntimeError("Array utility only supports vhdl 2008")
+
+        library = self.library(library_name)
+        library.add_source_files(join(self._builtin_vhdl_path, "array", "src", "array_pkg.vhd"))
 
 class LibraryFacade:
     """
@@ -422,5 +435,8 @@ class EntityFacade:
         " Set pli within entity "
         self._config.set_pli(value, scope=self._name)
 
-    def add_config(self, *args, **kwargs):
-        self._config.add_config(*args, tb_name=self._name, **kwargs)
+    def add_config(self, name, generics, post_check=None):
+        self._config.add_config(tb_name=self._name,
+                                name=name,
+                                generics=generics,
+                                post_check=post_check)
